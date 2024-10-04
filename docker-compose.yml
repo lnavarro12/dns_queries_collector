@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  app:
+    container_name: dns_queries_collector
+    restart: always
+    build: .
+    volumes:
+      - .:/app
+    ports:
+      - "8090:5000"
+    command: >
+      bash -c "python collector.py queries"
