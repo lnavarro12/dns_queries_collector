@@ -3,6 +3,11 @@ import argparse
 import os
 import re
 from datetime import datetime
+from utils import request_service
+from constants import (
+    CHUNKS,
+    SERVICE,
+)
 import numpy as np
 
 # 1. Reading and Parsing the BIND Log
@@ -106,14 +111,33 @@ def process_queries(queries: str):
                 processed_queries.append(query)
 
     # Divide the processed queries into chunks of 500
-    query_chunks = np.array_split(processed_queries, np.ceil(len(processed_queries) / 500))
+    query_chunks = np.array_split(processed_queries, np.ceil(len(processed_queries) / CHUNKS))
 
     for chunk in query_chunks:
-        print(chunk.tolist(), flush=True)
+        send_queries(chunk.tolist())
 
     return query_chunks
 
+def send_queries(queries: list):
+    """ Send DNS queries to Lumu API
+        Args:
+            queries (str): Path to the BIND server log file
+        Returns:
+            None
+    """
 
+    # send the queries to Lumu API
+    response = request_service(
+        data=queries,
+        url=SERVICE.get('LUMU_HOST') +
+        f'/collectors/{SERVICE.get("COLLECTOR_ID")}' +
+        f'/dns/queries?key={SERVICE.get("LUMU_CLIENT_KEY")}',
+        method="POST",
+        headers={"Content-Type": "application/json"}
+    )
+    print(response, flush=True)
+
+    exit()
 
 
 def main():
