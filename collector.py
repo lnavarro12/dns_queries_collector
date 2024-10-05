@@ -8,10 +8,9 @@ from constants import (
     CHUNKS,
     SERVICE,
 )
-import numpy as np
 import pandas as pd
 
-# 1. Reading and Parsing the BIND Log
+
 def parse_arguments():
     """ Parse command line arguments 
         Args:
@@ -94,27 +93,81 @@ def formatting_queries(query: str) -> dict:
         'name': client_name
     }
 
-# 1.1 Process BIND server log file
+
 def process_queries(queries: str):
     """ Process BIND server log file and send DNS queries to Lumu API
         Args:
             queries (str): Path to the BIND server log file
         Returns:
+            processed_queries (list): List of processed DNS queries
+    """
+    processed_queries = []
+    try:
+        with open(queries, 'r', encoding='utf-8') as file:
+            for line in file:
+                # Format each line of the file
+                query = formatting_queries(line)
+
+                if query:
+                    processed_queries.append(query)
+
+        # if the list do not have the chunk size
+        # then I send the remaining queries
+        if len(processed_queries) > 0:
+            chunk_queries(processed_queries)
+
+    except FileNotFoundError as e:
+        print(f'Error opening file: {e}')
+    except UnicodeDecodeError as e:
+        print(f'Error decoding line: {e}')
+
+    return processed_queries
+
+
+def chunk_queries(queries: list):
+    """ Send DNS queries to Lumu API
+        Args:
+            queries (str): Path to the BIND server log file
+        Returns:
+            
+    """
+    # Divide the processed queries into chunks of CHUNKS
+    for i in range(0, len(queries), CHUNKS):
+        chunk = queries[i:i + CHUNKS]
+        send_queries(chunk)
+
+    print(f"Processed {len(queries)} queries in {len(queries) / CHUNKS} chunks.")
+
+
+def send_queries(queries: list):
+    """ Send DNS queries to Lumu API
+        Args:
+            queries (str): Path to the BIND server log file
+        Returns:
             None
     """
-    with open(queries, 'r', encoding='utf-8') as file:
-        processed_queries = []
-        n = 0
-        for line in file:
-            n += 1
-            # Procesar cada línea del archivo
-            query = formatting_queries(line)
+    url = (f"{SERVICE.get('LUMU_HOST')}/collectors/{SERVICE.get('COLLECTOR_ID')}/dns/queries"
+           f"?key={SERVICE.get('LUMU_CLIENT_KEY')}")
 
-            if query:
-                processed_queries.append(query)
+    try:
+        # send the queries to Lumu API
+        response = request_service(
+            data=queries,
+            url=url,
+            method="POST",
+            headers={"Content-Type": "application/json"}
+        )
 
-    #chunk_queries(processed_queries)
-    return processed_queries
+        if response:
+            print(
+                f"Sent {len(queries)} queries to Lumu API. Response:"
+                f"{response.text} - {response.status_code}"
+            )
+
+    except Exception as e:
+        print(f"Error sending queries to Lumu API: {e}")
+
+    return response
 
 
 def analitics_overview(queries: list):
@@ -166,44 +219,6 @@ def analitics_overview(queries: list):
     })
 
     print(ranking_df)
-
-
-
-
-def chunk_queries(queries: list):
-    """ Send DNS queries to Lumu API
-        Args:
-            queries (str): Path to the BIND server log file
-        Returns:
-            None
-    """
-    # Divide the processed queries into chunks of 500
-    query_chunks = np.array_split(queries, np.ceil(len(queries) / CHUNKS))
-
-    for chunk in query_chunks:
-        send_queries(chunk.tolist())
-
-    return query_chunks
-
-def send_queries(queries: list):
-    """ Send DNS queries to Lumu API
-        Args:
-            queries (str): Path to the BIND server log file
-        Returns:
-            None
-    """
-
-    # send the queries to Lumu API
-    response = request_service(
-        data=queries,
-        url=SERVICE.get('LUMU_HOST') +
-        f'/collectors/{SERVICE.get("COLLECTOR_ID")}' +
-        f'/dns/queries?key={SERVICE.get("LUMU_CLIENT_KEY")}',
-        method="POST",
-        headers={"Content-Type": "application/json"}
-    )
-    return response
-
 
 def main():
     """ Main function """
