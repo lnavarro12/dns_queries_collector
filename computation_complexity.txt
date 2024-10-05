@@ -1,0 +1,14 @@
+Explica que es la complejidad computacional de tu algoritmo de ranking:
+
+Basado en la documentación consultada:
+- https://numerentur.org/complejidad-computacional/
+- https://www.freecodecamp.org/espanol/news/hoja-de-trucos-big-o/
+- https://bravedeveloper.com/2022/03/05/time-complexity-o-complejidad-temporal-eficiencia-de-los-algoritmos-en-terminos-de-tiempo/
+
+El algoritmo maneja una notación O(n): 
+
+La notación O(n) define a los tipos de algoritmos donde el número de operaciones aumenta de forma proporcional al número de elementos, por lo tanto también el tiempo aumenta de forma lineal.
+
+Teniendo en cuenta que para el ejercicio implementé  la bibliota de pandas y sus funciones para crear dataframes, value_counts y rank, estas funciones generarán estructuras de datos que almacenarán los resultados del conteo y el ranking, cada una de ellas tendrán un impacto considerable debido a que serán directamente proporcionales al número de registros en el archivo queries, por lo tanto el tiempo de ejecución irá en aumento.
+
+Para las asignación de las variables utilizadas clients_ip y clients_name la notación es O(1), dado que sin importar la cantidad de registros, la operación es la misma.

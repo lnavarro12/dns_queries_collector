@@ -29,9 +29,6 @@ def analitics_overview(queries: list):
         'percentage': clients_ip_percentage,
     })
 
-    print(ranking_df)
-
-
     # calculate the number of clients_name
     clients_name = df['name'].value_counts()
 
@@ -48,4 +45,9 @@ def analitics_overview(queries: list):
         'percentage': clients_name_percentage,
     })
 
+    print(f"Total records: {total_records}")
+    print("\n\n")
+    # print the result
+    print(ranking_df)
+    print("\n\n")
     print(ranking_df)
