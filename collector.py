@@ -9,6 +9,7 @@ from constants import (
     SERVICE,
 )
 import numpy as np
+import pandas as pd
 
 # 1. Reading and Parsing the BIND Log
 def parse_arguments():
@@ -103,15 +104,81 @@ def process_queries(queries: str):
     """
     with open(queries, 'r', encoding='utf-8') as file:
         processed_queries = []
+        n = 0
         for line in file:
+            n += 1
             # Procesar cada línea del archivo
             query = formatting_queries(line)
 
             if query:
                 processed_queries.append(query)
 
+    #chunk_queries(processed_queries)
+    return processed_queries
+
+
+def analitics_overview(queries: list):
+    """ Analyze DNS queries
+        Args:
+            queries (str): Path to the BIND server log file
+        Returns:
+            None
+    """
+    # Analyze DNS queries
+
+    # create a dataframe
+    df = pd.DataFrame(queries)
+
+    # calculate the number of clients_ip
+    clients_ip = df['client_ip'].value_counts()
+
+    # calculate the percentage of clients_ip
+    total_records = df.shape[0]
+    clients_ip_percentage = (clients_ip / total_records) * 100
+    clients_ip_percentage = clients_ip_percentage.round(2)
+    clients_ip_percentage = clients_ip_percentage.apply(lambda x: f'{x:.2f}%')
+
+    # calculate the rank of clients_ip
+    value_counts_ranked = clients_ip.rank(ascending=False, method='dense')
+    ranking_df = pd.DataFrame({
+        'count': clients_ip,
+        'rank': value_counts_ranked,
+        'percentage': clients_ip_percentage,
+    })
+
+    print(ranking_df)
+
+
+    # calculate the number of clients_name
+    clients_name = df['name'].value_counts()
+
+    # calculate the percentage of clients_name
+    clients_name_percentage = (clients_name / total_records) * 100
+    clients_name_percentage = clients_name_percentage.round(2)
+    clients_name_percentage = clients_name_percentage.apply(lambda x: f'{x:.2f}%')
+
+    # calculate the rank of clients_name
+    value_counts_ranked = clients_name.rank(ascending=False, method='dense')
+    ranking_df = pd.DataFrame({
+        'count': clients_name,
+        'rank': value_counts_ranked,
+        'percentage': clients_name_percentage,
+    })
+
+    print(ranking_df)
+
+
+
+
+def chunk_queries(queries: list):
+    """ Send DNS queries to Lumu API
+        Args:
+            queries (str): Path to the BIND server log file
+        Returns:
+            None
+    """
     # Divide the processed queries into chunks of 500
-    query_chunks = np.array_split(processed_queries, np.ceil(len(processed_queries) / CHUNKS))
+    query_chunks = np.array_split(queries, np.ceil(len(queries) / CHUNKS))
 
     for chunk in query_chunks:
         send_queries(chunk.tolist())
@@ -135,15 +202,14 @@ def send_queries(queries: list):
         method="POST",
         headers={"Content-Type": "application/json"}
     )
-    print(response, flush=True)
-
-    exit()
+    return response
 
 
 def main():
     """ Main function """
     queries = parse_arguments()
-    process_queries(queries)
+    format_querys = process_queries(queries)
+    analitics_overview(format_querys)
 
 
 if __name__ == '__main__':

@@ -50,9 +50,4 @@ def request_service(
         params=params,
         timeout=20,
     )
-    print("llego", flush=True)
-    print(response, flush=True)
-    print(response.__dict__, flush=True)
-    exit()
-
-    return response.json()
+    return response
